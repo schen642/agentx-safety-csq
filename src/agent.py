@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# STRIDE-style runtime parameters (overridable via environment)
+# Runtime parameters (overridable via environment)
 # ============================================================================
 
 S = {
