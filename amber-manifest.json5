@@ -15,7 +15,7 @@
   },
 
   "program": {
-    "image": "ghcr.io/schen642/agentx-purple-safety-csq:latest",
+    "image": "ghcr.io/schen642/agentx-safety-csq:latest",
     "entrypoint": "python src/server.py --host 0.0.0.0 --port 9009",
 
     "env": {
