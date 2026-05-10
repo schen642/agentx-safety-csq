@@ -978,7 +978,7 @@ class Agent:
 
         # ------- LLM call -------
         kwargs: dict[str, Any] = {
-            "model": os.environ.get("AGENT_MODEL", "gpt-4o-mini"),
+            "model": os.environ.get("AGENT_MODEL", "gpt-5"),
             "messages": session["messages"],
             "drop_params": True,
             "num_retries": 2,
