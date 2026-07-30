@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Collection
 
-
 _RETAIL_LOOKUPS = (
     "lookup_order",
     "lookup_customer_profile",

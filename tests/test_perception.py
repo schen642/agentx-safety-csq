@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
@@ -181,7 +180,10 @@ def test_one_message_can_create_multiple_independent_requests() -> None:
     )
 
     assert result.event_type == "NEW_REQUEST"
-    assert {(request.request_type, request.target_id) for request in result.requests} == {
+    actual_requests = {
+        (request.request_type, request.target_id) for request in result.requests
+    }
+    assert actual_requests == {
         ("password_reset", "EMP_4401"),
         ("software_install", "EMP_5502"),
     }

@@ -1,12 +1,13 @@
 """A2A Executor: Routes messages to the policy-compliance agent."""
 import logging
 import uuid
+
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
-from a2a.types import TaskState, UnsupportedOperationError, InvalidRequestError
-from a2a.utils.errors import ServerError
+from a2a.types import InvalidRequestError, TaskState, UnsupportedOperationError
 from a2a.utils import new_agent_text_message, new_task
+from a2a.utils.errors import ServerError
 
 from a2a_compat import await_if_needed, task_context_id
 from agent import Agent

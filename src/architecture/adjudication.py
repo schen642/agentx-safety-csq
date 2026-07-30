@@ -5,11 +5,10 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from .models import Fact, FactStatus, RequestState
-
 
 ALLOWED_DECISIONS = frozenset(
     {"ALLOW", "ALLOW-CONDITIONAL", "DENY", "ESCALATE"}
@@ -68,7 +67,7 @@ class DecisionDraft:
     customer_safe_reason: str
 
     @classmethod
-    def from_dict(cls, value: dict[str, Any]) -> "DecisionDraft":
+    def from_dict(cls, value: dict[str, Any]) -> DecisionDraft:
         actions = value.get("required_actions", [])
         if not isinstance(actions, list):
             raise ValueError("required_actions must be a list")
@@ -90,7 +89,7 @@ class DecisionDraft:
         )
 
 
-class ValidationRoute(str, Enum):
+class ValidationRoute(StrEnum):
     READY_FOR_EXECUTION = "ready_for_execution"
     REINVESTIGATE = "reinvestigate"
     RETRY_ADJUDICATION = "retry_adjudication"
@@ -150,7 +149,9 @@ def _tool_definition(tool: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     return str(definition.get("name", "")), definition
 
 
-def _parameter_schema(definition: dict[str, Any]) -> tuple[dict[str, Any], set[str], bool]:
+def _parameter_schema(
+    definition: dict[str, Any],
+) -> tuple[dict[str, Any], set[str], bool]:
     parameters = definition.get("parameters") or {}
     if parameters.get("type") == "object":
         return (
@@ -172,7 +173,9 @@ def _parameter_schema(definition: dict[str, Any]) -> tuple[dict[str, Any], set[s
 def _value_matches_type(value: Any, expected: str) -> bool:
     checks = {
         "string": lambda item: isinstance(item, str),
-        "number": lambda item: isinstance(item, (int, float)) and not isinstance(item, bool),
+        "number": lambda item: (
+            isinstance(item, (int, float)) and not isinstance(item, bool)
+        ),
         "integer": lambda item: isinstance(item, int) and not isinstance(item, bool),
         "boolean": lambda item: isinstance(item, bool),
         "object": lambda item: isinstance(item, dict),
@@ -181,7 +184,10 @@ def _value_matches_type(value: Any, expected: str) -> bool:
     return checks.get(expected, lambda _: True)(value)
 
 
-def _schema_issues(action: ActionSpec, definition: dict[str, Any]) -> list[ValidationIssue]:
+def _schema_issues(
+    action: ActionSpec,
+    definition: dict[str, Any],
+) -> list[ValidationIssue]:
     properties, required, additional_allowed = _parameter_schema(definition)
     issues: list[ValidationIssue] = []
     for missing in sorted(required - action.arguments.keys()):
@@ -228,7 +234,8 @@ def _action_compatibility_issues(draft: DecisionDraft) -> list[ValidationIssue]:
         issues.append(
             ValidationIssue(
                 "action_compatibility",
-                "record_decision is appended by execution and must not be a required action",
+                "record_decision is appended by execution and must not be "
+                "a required action",
             )
         )
     allow_mutations = [

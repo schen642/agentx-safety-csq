@@ -13,7 +13,6 @@ from dataclasses import dataclass
 
 from .models import Fact, FactSource, FactStatus, PerceptionResult, RequestIntent
 
-
 EVENT_TYPES = frozenset(
     {
         "NEW_REQUEST",

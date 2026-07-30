@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class ToolCategory(str, Enum):
+class ToolCategory(StrEnum):
     LOOKUP = "lookup"
     ACTION = "action"
     DECISION = "decision"
 
 
-class ToolResultDisposition(str, Enum):
+class ToolResultDisposition(StrEnum):
     MATCHED_SUCCESS = "matched_success"
     MATCHED_ERROR = "matched_error"
     UNKNOWN_CALL_ID = "unknown_call_id"

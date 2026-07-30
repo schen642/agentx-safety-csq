@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from .adjudication import ActionSpec, DecisionDraft
@@ -11,14 +11,14 @@ from .models import RequestState
 from .tool_registry import DOMAIN_TOOL_PRIORITIES, IRREVERSIBLE_TOOLS
 
 
-class ExecutionStatus(str, Enum):
+class ExecutionStatus(StrEnum):
     READY = "ready"
     WAITING_RESULT = "waiting_result"
     COMPLETE = "complete"
     FAILED_SAFE = "failed_safe"
 
 
-class StepMutability(str, Enum):
+class StepMutability(StrEnum):
     MUTATING = "mutating"
     IRREVERSIBLE = "irreversible"
     DECISION = "decision"

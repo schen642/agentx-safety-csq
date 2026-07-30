@@ -27,16 +27,11 @@ from collections.abc import MutableMapping
 from typing import Any
 
 import litellm
-
 from a2a.server.tasks import TaskUpdater
-from a2a.types import Message, Part, TextPart, DataPart, TaskState
+from a2a.types import DataPart, Message, Part, TaskState, TextPart
 from a2a.utils import new_agent_text_message
+
 from a2a_compat import await_if_needed, message_context_id
-from architecture.investigation import (
-    InvestigationState,
-    InvestigationStatus,
-    build_investigation,
-)
 from architecture.adjudication import (
     DecisionDraft,
     ValidationIssue,
@@ -46,13 +41,18 @@ from architecture.adjudication import (
     parse_decision_draft,
     validate_decision_draft,
 )
+from architecture.context import build_request_context
 from architecture.execution import (
     ExecutionQueue,
     ExecutionStatus,
     StepMutability,
     compile_execution_queue,
 )
-from architecture.context import build_request_context
+from architecture.investigation import (
+    InvestigationState,
+    InvestigationStatus,
+    build_investigation,
+)
 from architecture.models import (
     Fact,
     FactSource,
@@ -61,18 +61,18 @@ from architecture.models import (
     RequestState,
 )
 from architecture.perception import analyze_message, build_request_key
+from architecture.session import SessionState
+from architecture.tool_registry import (
+    LOOKUP_TOOLS,
+    RegisteredToolKind,
+    registered_tool_kind,
+)
 from architecture.tool_state import (
     PendingToolCall,
     ToolCallTracker,
     ToolCategory,
     ToolResultDisposition,
 )
-from architecture.tool_registry import (
-    LOOKUP_TOOLS,
-    RegisteredToolKind,
-    registered_tool_kind,
-)
-from architecture.session import SessionState
 from prompts import (
     FINRA_PROMPT,
     HELPDESK_PROMPT,
@@ -306,7 +306,11 @@ def _reconcile_tool_result(session: SessionData, message: dict[str, Any]) -> Non
             elif disposition is ToolResultDisposition.MATCHED_ERROR:
                 investigation.accept_error(call_id, call.tool_name)
             request_state = session["request_ledger"].get(call.request_key)
-            if request_state and investigation.status is not InvestigationStatus.INVESTIGATING:
+            if (
+                request_state
+                and investigation.status
+                is not InvestigationStatus.INVESTIGATING
+            ):
                 request_state.phase = RequestPhase.ADJUDICATING
 
     if call.request_key:

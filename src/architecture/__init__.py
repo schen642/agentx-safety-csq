@@ -4,15 +4,6 @@ Phase B deliberately keeps these components separate from the production
 agent. Later phases can integrate them without changing their public types.
 """
 
-from .models import (
-    Fact,
-    FactSource,
-    FactStatus,
-    PerceptionResult,
-    RequestIntent,
-    RequestPhase,
-    RequestState,
-)
 from .adjudication import (
     ActionSpec,
     DecisionDraft,
@@ -24,10 +15,10 @@ from .adjudication import (
     parse_decision_draft,
     validate_decision_draft,
 )
-from .investigation import (
-    InvestigationState,
-    InvestigationStatus,
-    build_investigation,
+from .context import (
+    RECENT_DIALOGUE_LIMIT,
+    approximate_input_tokens,
+    build_request_context,
 )
 from .execution import (
     CompletedToolStep,
@@ -37,10 +28,19 @@ from .execution import (
     ToolStep,
     compile_execution_queue,
 )
-from .context import (
-    RECENT_DIALOGUE_LIMIT,
-    approximate_input_tokens,
-    build_request_context,
+from .investigation import (
+    InvestigationState,
+    InvestigationStatus,
+    build_investigation,
+)
+from .models import (
+    Fact,
+    FactSource,
+    FactStatus,
+    PerceptionResult,
+    RequestIntent,
+    RequestPhase,
+    RequestState,
 )
 from .perception import (
     PerceptionEngine,

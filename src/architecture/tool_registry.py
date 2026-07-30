@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class RegisteredToolKind(str, Enum):
+class RegisteredToolKind(StrEnum):
     LOOKUP = "lookup"
     ACTION = "action"
     DECISION = "decision"

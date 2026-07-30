@@ -6,8 +6,8 @@ import asyncio
 import sys
 from pathlib import Path
 
-from a2a.server.events import EventQueue
 from a2a.server.agent_execution import RequestContext
+from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
 from a2a.types import (
     DataPart,
@@ -19,7 +19,6 @@ from a2a.types import (
     TextPart,
 )
 from a2a.utils import new_task
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"

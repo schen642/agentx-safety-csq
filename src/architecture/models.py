@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class FactSource(str, Enum):
+class FactSource(StrEnum):
     """Where a fact entered the request state."""
 
     USER_ASSERTED = "user_asserted"
@@ -16,7 +16,7 @@ class FactSource(str, Enum):
     SYSTEM_CONTEXT = "system_context"
 
 
-class FactStatus(str, Enum):
+class FactStatus(StrEnum):
     """Current confidence and conflict status of a fact."""
 
     UNKNOWN = "unknown"
@@ -61,7 +61,7 @@ class PerceptionResult:
     identifiers: dict[str, str]
 
 
-class RequestPhase(str, Enum):
+class RequestPhase(StrEnum):
     """Lifecycle phases for one request, not the whole conversation."""
 
     NEW = "new"

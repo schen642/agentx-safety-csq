@@ -37,7 +37,7 @@ class RuntimeSettings:
     a2a_max_body_bytes: int
 
     @classmethod
-    def from_env(cls) -> "RuntimeSettings":
+    def from_env(cls) -> RuntimeSettings:
         model = os.environ.get("AGENT_MODEL", "gpt-5").strip()
         if not model:
             raise ValueError("AGENT_MODEL must not be empty")

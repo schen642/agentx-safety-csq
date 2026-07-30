@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from .workflows import (
@@ -13,7 +13,7 @@ from .workflows import (
 )
 
 
-class InvestigationStatus(str, Enum):
+class InvestigationStatus(StrEnum):
     INVESTIGATING = "investigating"
     COMPLETE = "complete"
     MISSING_EVIDENCE = "missing_evidence"

@@ -11,7 +11,6 @@ from typing import Any
 
 import pytest
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
@@ -30,7 +29,6 @@ from architecture import (  # noqa: E402
     extract_clause_ids,
     validate_decision_draft,
 )
-
 
 POLICY = "BM-RET-GEN-01: Eligible items may be refunded."
 
