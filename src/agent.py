@@ -23,6 +23,7 @@ import json
 import logging
 import re
 import uuid
+from collections.abc import MutableMapping
 from typing import Any
 
 import litellm
@@ -82,6 +83,8 @@ from session_store import SessionStore
 from settings import SETTINGS
 
 logger = logging.getLogger(__name__)
+
+SessionData = MutableMapping[str, Any]
 
 
 # ============================================================================
@@ -272,7 +275,7 @@ def _tool_result_is_error(message: dict[str, Any], payload: Any) -> bool:
     return False
 
 
-def _reconcile_tool_result(session: dict[str, Any], message: dict[str, Any]) -> None:
+def _reconcile_tool_result(session: SessionData, message: dict[str, Any]) -> None:
     """Apply a tool result only when it matches one outstanding call."""
 
     call_id = str(message.get("tool_call_id") or "")
@@ -335,7 +338,7 @@ def _reconcile_tool_result(session: dict[str, Any], message: dict[str, Any]) -> 
 
 
 def _write_verified_lookup_facts(
-    session: dict[str, Any],
+    session: SessionData,
     *,
     request_key: str,
     tool_name: str,
@@ -372,7 +375,7 @@ def _available_tool_names(tools: list[dict[str, Any]]) -> set[str]:
 
 
 def _add_request(
-    session: dict[str, Any],
+    session: SessionData,
     *,
     request_key: str,
     request_type: str,
@@ -403,7 +406,7 @@ def _add_request(
 
 
 def _route_user_messages(
-    session: dict[str, Any],
+    session: SessionData,
     messages: list[dict[str, Any]],
 ) -> None:
     """Route new requests and enforce request-scoped post-decision locks."""
@@ -539,7 +542,7 @@ def _route_user_messages(
 
 
 def _incoming_delta(
-    session: dict[str, Any],
+    session: SessionData,
     incoming: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Remove a cumulative upstream prefix already present in the audit trace."""
@@ -555,7 +558,7 @@ def _incoming_delta(
 
 
 def _prompt_context(
-    session: dict[str, Any],
+    session: SessionData,
     request: RequestState | None,
 ) -> list[dict[str, str]]:
     request_key = request.request_key if request is not None else None
@@ -570,7 +573,7 @@ def _prompt_context(
 
 
 def _related_recorded_request_key(
-    session: dict[str, Any],
+    session: SessionData,
     perception: Any,
 ) -> str | None:
     """Resolve a post-decision message to one request without global locking."""
@@ -612,7 +615,7 @@ def _related_recorded_request_key(
 
 
 def _begin_request_revision(
-    session: dict[str, Any],
+    session: SessionData,
     request: RequestState,
 ) -> None:
     """Consume the request's sole material-fact reinvestigation allowance."""
@@ -646,7 +649,7 @@ def _begin_request_revision(
     session["execution_queues"].pop(request.request_key, None)
 
 
-def _locked_chat_response(session: dict[str, Any], request_key: str) -> str:
+def _locked_chat_response(session: SessionData, request_key: str) -> str:
     draft = (
         session["validated_drafts"].get(request_key)
         or session["decision_drafts"].get(request_key)
@@ -657,7 +660,7 @@ def _locked_chat_response(session: dict[str, Any], request_key: str) -> str:
     return "The recorded decision for this request remains unchanged."
 
 
-def _active_investigation(session: dict[str, Any]) -> InvestigationState | None:
+def _active_investigation(session: SessionData) -> InvestigationState | None:
     for request_key, investigation in session["investigations"].items():
         if investigation.status is InvestigationStatus.INVESTIGATING:
             session["active_request_key"] = request_key
@@ -665,7 +668,7 @@ def _active_investigation(session: dict[str, Any]) -> InvestigationState | None:
     return None
 
 
-def _visible_tools(session: dict[str, Any]) -> list[dict[str, Any]]:
+def _visible_tools(session: SessionData) -> list[dict[str, Any]]:
     """Return only tools legal in the current investigation phase."""
 
     investigation = _active_investigation(session)
@@ -701,7 +704,7 @@ def _visible_tools(session: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _active_adjudication_request(
-    session: dict[str, Any],
+    session: SessionData,
 ) -> RequestState | None:
     if _active_investigation(session) is not None:
         return None
@@ -713,7 +716,7 @@ def _active_adjudication_request(
 
 
 def _missing_evidence_for_request(
-    session: dict[str, Any],
+    session: SessionData,
     request_key: str,
 ) -> list[str]:
     investigation = session["investigations"].get(request_key)
@@ -731,7 +734,7 @@ _CONTEXT_PRESSURE_PATTERN = re.compile(
 )
 
 
-def _context_only_dialogue(session: dict[str, Any], request_key: str) -> list[str]:
+def _context_only_dialogue(session: SessionData, request_key: str) -> list[str]:
     """Keep request facts while removing authority/urgency pressure tokens."""
 
     sanitized: list[str] = []
@@ -746,7 +749,7 @@ def _context_only_dialogue(session: dict[str, Any], request_key: str) -> list[st
 
 
 def _adjudication_context(
-    session: dict[str, Any],
+    session: SessionData,
     request: RequestState,
 ) -> list[dict[str, str]]:
     investigation = session["investigations"].get(request.request_key)
@@ -780,7 +783,7 @@ def _adjudication_context(
 
 
 def _apply_validation_outcome(
-    session: dict[str, Any],
+    session: SessionData,
     request: RequestState,
     draft: DecisionDraft | None,
     outcome: ValidationOutcome,
@@ -802,6 +805,20 @@ def _apply_validation_outcome(
         session["decision_drafts"][request_key] = draft
 
     if outcome.route is ValidationRoute.READY_FOR_EXECUTION:
+        if draft is None:
+            failed = ValidationOutcome(
+                ValidationRoute.FAILED_SAFE,
+                [
+                    ValidationIssue(
+                        "missing_decision_draft",
+                        "validation succeeded without a decision draft",
+                    )
+                ],
+            )
+            session["validation_outcomes"][request_key] = failed
+            session["adjudication_issues"][request_key] = failed.issues
+            request.phase = RequestPhase.FAILED_SAFE
+            return failed
         investigation = session["investigations"].get(request_key)
         investigation_complete = (
             investigation is not None
@@ -857,7 +874,7 @@ def _apply_validation_outcome(
 
 
 def _parse_and_validate_adjudication(
-    session: dict[str, Any],
+    session: SessionData,
     request: RequestState,
     content: str,
 ) -> tuple[DecisionDraft | None, ValidationOutcome]:
@@ -911,7 +928,7 @@ def _policy_text(
 
 
 def _active_execution_queue(
-    session: dict[str, Any],
+    session: SessionData,
 ) -> ExecutionQueue | None:
     for request_key, request in session["request_ledger"].items():
         if request.phase is not RequestPhase.EXECUTING:
@@ -924,7 +941,7 @@ def _active_execution_queue(
 
 
 def _execution_call_payload(
-    session: dict[str, Any],
+    session: SessionData,
     queue: ExecutionQueue,
 ) -> dict[str, Any] | None:
     step = queue.current_step
@@ -954,7 +971,7 @@ def _execution_call_payload(
 
 
 async def _emit_execution_step(
-    session: dict[str, Any],
+    session: SessionData,
     updater: TaskUpdater,
 ) -> bool:
     """Emit one code-selected step and bypass the LLM."""
